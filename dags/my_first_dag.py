@@ -127,13 +127,43 @@ def generate_report_2():
 
 def generate_report_3():
     # Pickups and dropoffs at each Borough per month - Total number of pickups and dropoffs at all locations in each borough.
-
+    engine = create_engine('mysql+pymysql://root:Iliketostore1!@localhost:33061/nyc_yellow_taxi_trip')
+    df = pd.read_sql_table('combined_dataset', con=engine)
+    query = '''
+        SELECT DATE(tpep_pickup_datetime) as date, COUNT(*) as num_trips 
+        FROM combined_dataset 
+        GROUP BY date
+    '''
+    df = pd.read_sql_query(query, con=engine)
+    print(df)
+    df['month'] = pd.to_datetime(df['date']).dt.to_period('M')  # add a new column with the month
+    grouped_df = df.groupby('month')['farebox'].mean()  # group by month and find the mean of value_column
+    grouped_df = grouped_df.reset_index()  # reset the index to include the month column in the CSV file
+    print(grouped_df)
+    directory_path = './reports'
+    file_name = 'report2.csv'
+    file_path = f"{directory_path}/{file_name}"
+    grouped_df.to_csv(file_path, index=False)   
+    
     
     print("generate_report_3")
 
 def generate_report_4():
+    # Trip miles per month over time - Total distance in miles reported by the taximeter per month from 2018 to 2020
+    engine = create_engine('mysql+pymysql://root:Iliketostore1!@localhost:33061/nyc_yellow_taxi_trip')
+    df = pd.read_sql_table('combined_dataset', con=engine)
+    query = '''
+        SELECT YEAR(tpep_pickup_datetime) as year, MONTH(tpep_pickup_datetime) as month, COUNT(trip_distance) as trip_miles 
+        FROM combined_dataset 
+        GROUP BY year, month
+    '''
+    df = pd.read_sql_query(query, con=engine)
+    print(df)
+    directory_path = './reports'
+    file_name = 'report4.csv'
+    file_path = f"{directory_path}/{file_name}"
+    df.to_csv(file_path, index=False)   
     print("generate_report_4")
-
 
 with DAG(dag_id="my_first_dag", start_date=datetime(2023,2,27), schedule=None, catchup=False) as dag:
     task1 = PythonOperator(task_id="ingest_2018_data", python_callable=ingest_2018_data)
@@ -145,13 +175,13 @@ with DAG(dag_id="my_first_dag", start_date=datetime(2023,2,27), schedule=None, c
     task7 = PythonOperator(task_id="generate_report_1", python_callable=generate_report_1)
     task8 = PythonOperator(task_id="generate_report_2", python_callable=generate_report_2)
     # task9 = PythonOperator(task_id="generate_report_3", python_callable=generate_report_3)
-    # task10 = PythonOperator(task_id="generate_report_4", python_callable=generate_report_4)
+    task10 = PythonOperator(task_id="generate_report_4", python_callable=generate_report_4)
 
 [task1, task3, task4] >> task2 >> task5 >> task6
 task6 >> task7
 task6 >> task8
 # task6 >> task9
-# task6 >> task10
+task6 >> task10
 
 if __name__ == "__main__":
     # ingest_2018_data()
@@ -160,4 +190,4 @@ if __name__ == "__main__":
     # clean_dataset()
     # combine_dataset()
     # load_database()
-    generate_report_2()
+    generate_report_4()
