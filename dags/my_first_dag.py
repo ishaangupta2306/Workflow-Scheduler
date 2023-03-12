@@ -9,23 +9,20 @@ from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float, 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from airflow.models import Variable
-
+from sqlalchemy import types
 
 def Hello():
     print("Hello")
 
-df1 = None
-df2 = None
-df3 = None
 def ingest_2018_data():  
-    df1 = pd.read_json('./dataset/yellow_taxi_trip_2018.json')
+    df1 = pd.read_json('./dataset/yellow_taxi_trip_2018.json', convert_dates=['datetime_field'])
     # Display the first 5 rows of the DataFrame
     Variable.set('df1', df1.to_json())
     print(df1.head())    
     print("Ingesting 2018")
 
 def ingest_2019_data():  
-    df2 = pd.read_json('./dataset/yellow_taxi_trip_2018.json')
+    df2 = pd.read_json('./dataset/yellow_taxi_trip_2018.json', convert_dates=['datetime_field'])
     # Display the first 5 rows of the DataFrame
     Variable.set('df2', df2.to_json())
     print(df2.head())    
@@ -33,7 +30,7 @@ def ingest_2019_data():
 
 
 def ingest_2020_data():  
-    df3 = pd.read_json('./dataset/yellow_taxi_trip_2018.json')
+    df3 = pd.read_json('./dataset/yellow_taxi_trip_2018.json', convert_dates=['datetime_field'])
     # Display the first 5 rows of the DataFrame
     Variable.set('df3', df3.to_json())
     print(df3.head())    
@@ -45,34 +42,54 @@ def combine_dataset():
     df2_json = Variable.get('df2')
     df3_json = Variable.get('df3')
 
-    df1 = pd.read_json(df1_json)
-    df2 = pd.read_json(df2_json)
-    df3 = pd.read_json(df3_json)
+    df1 = pd.read_json(df1_json, convert_dates=['datetime_field'])
+    df2 = pd.read_json(df2_json, convert_dates=['datetime_field'])
+    df3 = pd.read_json(df3_json, convert_dates=['datetime_field'])
     df_concat = pd.concat([df1, df2, df3], axis=0, ignore_index=True)
     Variable.set('df_concat', df_concat.to_json())
     print("combine_dataset")
 
 def clean_dataset():
     df_concat_json = Variable.get('df_concat')
-    df = pd.read_json(df_concat_json) 
+    df = pd.read_json(df_concat_json, convert_dates=['datetime_field']) 
     # Convert datetime column to pandas datetime object
     df['tpep_pickup_datetime'] = pd.to_datetime(df['tpep_pickup_datetime'])
     df = df[(df['tpep_pickup_datetime'].dt.year >= 2018) & (df['tpep_pickup_datetime'].dt.year <= 2020)]
     df['tpep_dropoff_datetime'] = pd.to_datetime(df['tpep_dropoff_datetime'])
     df = df[(df['tpep_dropoff_datetime'].dt.year >= 2018) & (df['tpep_dropoff_datetime'].dt.year <= 2020)]
     df = df.loc[:, df.nunique() > 1]
-    Variable.set('df', df.to_json())
-
+    Variable.set('df', df.to_json(date_format='iso'))
     print("clean_dataset")
 
 def load_database():
     engine = create_engine('mysql+pymysql://root:Iliketostore1!@localhost:33061/nyc_yellow_taxi_trip')
+    dtypes = {
+    'tpep_pickup_datetime': types.DATETIME(),
+    'tpep_dropoff_datetime': types.DATETIME()
+    }
+    
     df_concat_json = Variable.get('df')
     df = pd.read_json(df_concat_json) 
-    df.to_sql('combined_dataset', engine, if_exists='replace', index=False)
+    df.to_sql('combined_dataset', engine, if_exists='replace', index=False, dtype=dtypes)
     print("load_database")
 
 def generate_report_1():
+    # Monthly Summary Statistics reports providing the following information Trips per day - Average number of trips recorded each day
+    engine = create_engine('mysql+pymysql://root:Iliketostore1!@localhost:33061/nyc_yellow_taxi_trip')
+    df = pd.read_sql_table('combined_dataset', con=engine)
+    query = 'Select Month(tpep_pickup_datetime) from combined_dataset'
+    # query = '''SELECT MONTH(combined_dataset.tpep_pickup_datetime) as month, AVG(num_trips) 
+    # FROM (
+    #     SELECT DATE(tpep_pickup_datetime) as date, COUNT(*) as num_trips 
+    #     FROM nyc_yellow_taxi_trip.combined_dataset 
+    #     WHERE YEAR(tpep_pickup_datetime) = 2018 
+    #     GROUP BY date
+    # ) as trips_per_day 
+    # GROUP BY month;'''
+
+    df = pd.read_sql_query(query, con=engine)
+    print(df)
+
     print("generate_report_1")
 
 def generate_report_2():
@@ -107,4 +124,7 @@ if __name__ == "__main__":
     ingest_2018_data()
     ingest_2019_data()
     ingest_2020_data()
+    clean_dataset()
     combine_dataset()
+    load_database()
+    generate_report_1()
