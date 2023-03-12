@@ -26,11 +26,18 @@ $ airflow users list
 ```bash
 $ airflow scheduler
 ```
+![SchedulerStart](./resources/airflow-scheduler-cli-start.jpg)
+#### Airflow Scheduler Logs
+![SchedulerStart](./resources/airflow-scheduler-cli-logs.jpg)
 
 ### Start Airflow Webserver
 ```bash
 $ airflow webserver --port 8000
 ```
+![WebserverStart](./resources/airflow-webserver-cli-start.jpg)
+
+#### Airflow Webserver Logs
+![WebserverStart](./resources/airflow-webserver-cli-logs.jpg)
 
 The web browser should open browser and go to http://localhost:8000 
 
