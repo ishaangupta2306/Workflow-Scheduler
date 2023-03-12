@@ -95,9 +95,40 @@ def generate_report_1():
     print("generate_report_1")
 
 def generate_report_2():
+    # Farebox per day - Total amount, across all vehicles, collected from all fares, surcharges, taxes, and tolls. Note: this amount does not include
+    # amounts from credit card tips
+
+    # fare_amount, extra, mta_tax, tip_amount, tolls_amount, improvement_surcharge
+    # if payment_type = 1, then ignore tips 
+    engine = create_engine('mysql+pymysql://root:Iliketostore1!@localhost:33061/nyc_yellow_taxi_trip')
+    df = pd.read_sql_table('combined_dataset', con=engine)
+    query = '''
+        SELECT
+            DATE(tpep_pickup_datetime) AS date,
+            CASE WHEN payment_type = 1
+                THEN SUM(fare_amount + extra + mta_tax + tolls_amount + improvement_surcharge)
+                ELSE SUM(fare_amount + extra + mta_tax + tolls_amount + improvement_surcharge + tip_amount)
+            END AS farebox
+        FROM combined_dataset
+        GROUP BY DATE(tpep_pickup_datetime), payment_type;
+    '''
+    df = pd.read_sql_query(query, con=engine)
+    print(df)
+    df['month'] = pd.to_datetime(df['date']).dt.to_period('M')  # add a new column with the month
+    grouped_df = df.groupby('month')['farebox'].mean()  # group by month and find the mean of value_column
+    grouped_df = grouped_df.reset_index()  # reset the index to include the month column in the CSV file
+    print(grouped_df)
+    directory_path = './reports'
+    file_name = 'report2.csv'
+    file_path = f"{directory_path}/{file_name}"
+    grouped_df.to_csv(file_path, index=False)   
+    
     print("generate_report_2")
 
 def generate_report_3():
+    # Pickups and dropoffs at each Borough per month - Total number of pickups and dropoffs at all locations in each borough.
+
+    
     print("generate_report_3")
 
 def generate_report_4():
@@ -112,13 +143,13 @@ with DAG(dag_id="my_first_dag", start_date=datetime(2023,2,27), schedule=None, c
     task5 = PythonOperator(task_id="clean_dataset", python_callable=clean_dataset)
     task6 = PythonOperator(task_id="load_database", python_callable=load_database)
     task7 = PythonOperator(task_id="generate_report_1", python_callable=generate_report_1)
-    # task8 = PythonOperator(task_id="generate_report_2", python_callable=generate_report_2)
+    task8 = PythonOperator(task_id="generate_report_2", python_callable=generate_report_2)
     # task9 = PythonOperator(task_id="generate_report_3", python_callable=generate_report_3)
     # task10 = PythonOperator(task_id="generate_report_4", python_callable=generate_report_4)
 
 [task1, task3, task4] >> task2 >> task5 >> task6
 task6 >> task7
-# task6 >> task8
+task6 >> task8
 # task6 >> task9
 # task6 >> task10
 
@@ -129,4 +160,4 @@ if __name__ == "__main__":
     # clean_dataset()
     # combine_dataset()
     # load_database()
-    generate_report_1()
+    generate_report_2()
