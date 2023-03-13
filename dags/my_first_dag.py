@@ -71,6 +71,10 @@ def load_database():
     df_concat_json = Variable.get('df')
     df = pd.read_json(df_concat_json) 
     df.to_sql('combined_dataset', engine, if_exists='replace', index=False, dtype=dtypes)
+    
+    df = pd.read_csv('./dataset/taxi+_zone_lookup.csv')
+    table_name = 'taxi_zone_lookup'
+    df.to_sql(table_name, engine, if_exists='replace', index=False)
     print("load_database")
 
 def generate_report_1():
@@ -126,7 +130,40 @@ def generate_report_2():
     print("generate_report_2")
 
 def generate_report_3():    
-    print("generate_report_3")
+    engine = create_engine('mysql+pymysql://root:Iliketostore1!@localhost:33061/nyc_yellow_taxi_trip')
+    query = '''
+        select year, month, Borough as borough, sum(count) as pickup_and_dropoff_count
+        from ((
+        select YEAR(tpep_pickup_datetime) as year, MONTH(tpep_pickup_datetime) as month,
+        pickup_zone.Borough, count(*) as count
+        from combined_dataset
+        inner join taxi_zone_lookup as pickup_zone on
+        combined_dataset.pulocationid=pickup_zone.LocationID
+        inner join taxi_zone_lookup as dropoff_zone on
+        combined_dataset.dolocationid=dropoff_zone.LocationID
+        group by year, month, pickup_zone.Borough, dropoff_zone.Borough
+        )
+        union
+        (
+        select YEAR(tpep_pickup_datetime) as year, MONTH(tpep_pickup_datetime) as month,
+        dropoff_zone.Borough, count(*) as count
+        from combined_dataset
+        inner join taxi_zone_lookup as pickup_zone on
+        combined_dataset.pulocationid=pickup_zone.LocationID
+        inner join taxi_zone_lookup as dropoff_zone on
+        combined_dataset.dolocationid=dropoff_zone.LocationID
+        group by year, month, pickup_zone.Borough, dropoff_zone.Borough
+        )) as pickup_and_dropoff_counts_separate
+        group by year, month, Borough
+        order by year, month'''
+    
+    df = pd.read_sql_query(query, con=engine)
+    print(df)
+    directory_path = './reports'
+    file_name = 'report3.csv'
+    file_path = f"{directory_path}/{file_name}"
+    df.to_csv(file_path, index=False)   
+    print("generate_report_4")
 
 def generate_report_4():
     # Trip miles per month over time - Total distance in miles reported by the taximeter per month from 2018 to 2020
@@ -169,5 +206,5 @@ if __name__ == "__main__":
     # ingest_2020_data()
     # clean_dataset()
     # combine_dataset()
-    # load_database()
-    generate_report_4()
+    load_database()
+    generate_report_3()
