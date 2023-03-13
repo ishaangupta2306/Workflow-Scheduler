@@ -5,7 +5,7 @@ Yellow Cab taxis are an iconic method of transportation in the New York City. Us
 2. Data Combining
 3. Data Cleaning
 4. Loading Data in MySQL database
-5. Generating Monthly Summary Statistics reports 
+5. Data Analysis report generation 
     
 ![Airflow](https://lh4.googleusercontent.com/JvfkB7JkgUjAnbhbTwaTGyxAblaM4hBF8ws6cWYkTg2DzJjf5IwMq3u4JKkptDrecx7dLUa4IQGCwp-9jGON_cD8US93432eNBHefNYf-4Qgv42znqLCMo0QeZyI6OLSr1uPw0X8)
 ![MySQL](https://avatars.githubusercontent.com/u/2452804?s=200&v=4)
