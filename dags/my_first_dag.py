@@ -10,11 +10,13 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from airflow.models import Variable
 from sqlalchemy import types
+import urllib.request
 
 def Hello():
     print("Hello")
 
 def ingest_2018_data():  
+    urllib.request.urlretrieve('https://data.cityofnewyork.us/resource/t29m-gskq.json','./dataset/yellow_taxi_trip_2018.json')
     df1 = pd.read_json('./dataset/yellow_taxi_trip_2018.json', convert_dates=['datetime_field'])
     # Display the first 5 rows of the DataFrame
     Variable.set('df1', df1.to_json())
@@ -22,7 +24,8 @@ def ingest_2018_data():
     print("Ingesting 2018")
 
 def ingest_2019_data():  
-    df2 = pd.read_json('./dataset/yellow_taxi_trip_2018.json', convert_dates=['datetime_field'])
+    urllib.request.urlretrieve('https://data.cityofnewyork.us/resource/2upf-qytp.json','./dataset/yellow_taxi_trip_2019.json')
+    df2 = pd.read_json('./dataset/yellow_taxi_trip_2019.json', convert_dates=['datetime_field'])
     # Display the first 5 rows of the DataFrame
     Variable.set('df2', df2.to_json())
     print(df2.head())    
@@ -30,7 +33,9 @@ def ingest_2019_data():
 
 
 def ingest_2020_data():  
-    df3 = pd.read_json('./dataset/yellow_taxi_trip_2018.json', convert_dates=['datetime_field'])
+    urllib.request.urlretrieve('https://data.cityofnewyork.us/resource/kxp8-n2sj.json','./dataset/yellow_taxi_trip_2020.json')
+
+    df3 = pd.read_json('./dataset/yellow_taxi_trip_2020.json', convert_dates=['datetime_field'])
     # Display the first 5 rows of the DataFrame
     Variable.set('df3', df3.to_json())
     print(df3.head())    
@@ -134,25 +139,19 @@ def generate_report_3():
     query = '''
         select year, month, Borough as borough, sum(count) as pickup_and_dropoff_count
         from ((
-        select YEAR(tpep_pickup_datetime) as year, MONTH(tpep_pickup_datetime) as month,
-        pickup_zone.Borough, count(*) as count
-        from combined_dataset
-        inner join taxi_zone_lookup as pickup_zone on
-        combined_dataset.pulocationid=pickup_zone.LocationID
-        inner join taxi_zone_lookup as dropoff_zone on
-        combined_dataset.dolocationid=dropoff_zone.LocationID
-        group by year, month, pickup_zone.Borough, dropoff_zone.Borough
+            select YEAR(tpep_pickup_datetime) as year, MONTH(tpep_pickup_datetime) as month, pickup_zone.Borough, count(*) as count
+            from combined_dataset
+                inner join taxi_zone_lookup as pickup_zone on combined_dataset.pulocationid=pickup_zone.LocationID
+                inner join taxi_zone_lookup as dropoff_zone on combined_dataset.dolocationid=dropoff_zone.LocationID
+            group by year, month, pickup_zone.Borough, dropoff_zone.Borough
         )
         union
         (
-        select YEAR(tpep_pickup_datetime) as year, MONTH(tpep_pickup_datetime) as month,
-        dropoff_zone.Borough, count(*) as count
-        from combined_dataset
-        inner join taxi_zone_lookup as pickup_zone on
-        combined_dataset.pulocationid=pickup_zone.LocationID
-        inner join taxi_zone_lookup as dropoff_zone on
-        combined_dataset.dolocationid=dropoff_zone.LocationID
-        group by year, month, pickup_zone.Borough, dropoff_zone.Borough
+            select YEAR(tpep_pickup_datetime) as year, MONTH(tpep_pickup_datetime) as month, dropoff_zone.Borough, count(*) as count
+            from combined_dataset
+                inner join taxi_zone_lookup as pickup_zone on combined_dataset.pulocationid=pickup_zone.LocationID
+                inner join taxi_zone_lookup as dropoff_zone on combined_dataset.dolocationid=dropoff_zone.LocationID
+            group by year, month, pickup_zone.Borough, dropoff_zone.Borough
         )) as pickup_and_dropoff_counts_separate
         group by year, month, Borough
         order by year, month'''
@@ -201,10 +200,10 @@ task6 >> task9
 task6 >> task10
 
 if __name__ == "__main__":
-    # ingest_2018_data()
+    ingest_2018_data()
     # ingest_2019_data()
     # ingest_2020_data()
     # clean_dataset()
     # combine_dataset()
-    load_database()
-    generate_report_3()
+    # load_database()
+    # generate_report_3()
