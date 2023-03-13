@@ -1,8 +1,16 @@
-# Workflow-Scheduler
-Orchestrating workflow scheduling framework for NYC transportation reporting using Apache Airflow        
+# Workflow Scheduler for New York City Taxi 
+
+Yellow Cab taxis are an iconic method of transportation in the New York City. Using Apache Airflow, automated the following data engineering process for 3 years (2018-2020) for Yellow taxis Data
+1. Data Ingestion 
+2. Data Combining
+3. Data Cleaning
+4. Loading Data in MySQL database
+5. Generating Monthly Summary Statistics reports 
     
 ![Airflow](https://lh4.googleusercontent.com/JvfkB7JkgUjAnbhbTwaTGyxAblaM4hBF8ws6cWYkTg2DzJjf5IwMq3u4JKkptDrecx7dLUa4IQGCwp-9jGON_cD8US93432eNBHefNYf-4Qgv42znqLCMo0QeZyI6OLSr1uPw0X8)
 ![MySQL](https://avatars.githubusercontent.com/u/2452804?s=200&v=4)
+
+
 
 ### Install Apache Airflow (in WSL)
 ```bash
@@ -67,3 +75,9 @@ $ mysql -u root -p
 ![Subsampling](./resources/load-data-mysql2.jpg)
 
 
+### Dataset Sources & References
+1. 2018: https://data.cityofnewyork.us/resource/t29m-gskq.jsonLinks 
+2. 2019: https://data.cityofnewyork.us/resource/2upf-qytp.jsonLinks 
+3. 2020: https://data.cityofnewyork.us/resource/kxp8-n2sj.jsonLinks 
+4. Taxi Zones: https://d37ci6vzurychx.cloudfront.net/misc/taxi+_zone_lookup.csv
+5. Metadata info: https://www.nyc.gov/assets/tlc/downloads/pdf/data_dictionary_trip_records_yellow.pdf
