@@ -51,7 +51,7 @@ $ mysql -u root -p
 #### Connect MySQL Server in WSL with MySQL Workbench. Check out this: https://www.youtube.com/watch?v=DBsyCk2vZw4
 
 ### Worflow Framework 
-    1. Ingest 2018, 2019, 2020 Dataset = Ingesting Data from JSON files to Pandas Dataframes
+    1. Ingest 2018, 2019, 2020 Dataset = Ingesting Data from API endpoints and saving as JSON files
     2. Combine Dataset = Combined the 3 Dataframes
     3. Cleane Dataset 
         (a) Discarded data entries with datatime field values outside 2018, 2019, 2020
