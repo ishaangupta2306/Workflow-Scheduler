@@ -61,6 +61,9 @@ $ mysql -u root -p
 ![Subsampling](./resources/workflow-diagram.jpg)
 
 ### Load Database (Cleaned dataset loaded in MySQL)
+#### Combined 2018-2020 NYC Taxi trip Dataset
 ![Subsampling](./resources/load-data-mysql.jpg)
+#### Taxi and Zone Lookup Dataset
+![Subsampling](./resources/load-data-mysql2.jpg)
 
 
